@@ -18,9 +18,14 @@ COPY setup/requirements.txt duckietown
 COPY setup/initial.sh duckietown
 RUN cd duckietown && ./initial.sh 
 
-COPY simulation/requirements.txt duckietown
-RUN  pip install -r duckietown/requirements.txt
+#COPY simulation/requirements.txt duckietown
+#RUN  pip install -r duckietown/requirements.txt
 
+# Custom
+COPY simulation/ duckietown/simulation
+RUN pip install -r duckietown/simulation/requirements.txt
+
+COPY utils/ duckietown/utils
 
 ENV ROS_PYTHON_VERSION 3
 ENV SHELL /bin/bash
