@@ -11,7 +11,7 @@ import os
 import numpy as np
 
 from zuper_nodes_wrapper.wrapper_outside import ComponentInterface, MsgReceived
-from aido_schemas import protocol_agent
+from aido_schemas import protocol_agent_duckiebot1
 
 if '/duckietown/simulation/src' not in sys.path:
     sys.path.append('/duckietown/simulation/src')
@@ -49,7 +49,7 @@ class SimulatorBridge(object):
             logger.info(f"{AIDONODE_DATA_IN} deleted.")
 
         self.ci = ComponentInterface(AIDONODE_DATA_IN,
-                AIDONODE_DATA_OUT, protocol_agent, 'agent', timeout=30)
+                AIDONODE_DATA_OUT, protocol_agent_duckiebot1, 'agent', timeout=30)
         # File not found error -> problem mounting volume
         # File exist error -> volumes not properly cleaned
         self.ci.write_topic_and_expect_zero(u'seed', 32)
