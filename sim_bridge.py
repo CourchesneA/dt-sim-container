@@ -26,7 +26,6 @@ class SimulatorBridge(object):
     """
     def __init__(self):
         # We should remove /fifos/agen-in if present
-        print("Init simbridge")
         logger.info("Initialized simbridge")
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
@@ -38,49 +37,15 @@ class SimulatorBridge(object):
         self.rate = 15
 
 
-        print("About to connect fifos")
-        logger.info("Starting fifos connection")
-        AIDONODE_DATA_IN = '/fifos/agent-in'
-        AIDONODE_DATA_OUT = '/fifos/agent-out'
-        
-        if os.path.exists(AIDONODE_DATA_IN):
-            logger.info(f"name pipe '{AIDONODE_DATA_IN}' already exists, deleting ...")
-            os.remove(AIDONODE_DATA_IN)
-            logger.info(f"{AIDONODE_DATA_IN} deleted.")
-
-        self.ci = ComponentInterface(AIDONODE_DATA_IN,
-                AIDONODE_DATA_OUT, protocol_agent_duckiebot1, 'agent', timeout=30)
-        # File not found error -> problem mounting volume
-        # File exist error -> volumes not properly cleaned
-        self.ci.write_topic_and_expect_zero(u'seed', 32)
-        self.ci.write_topic_and_expect_zero(u'episode_start', {u'episode_name': u'episode'})
-        logger.info('SimulatorBridge successfully sent to the agent the seed and episode name.')
-        print("Succesfully connected fifos")
-
-
-    def _send_img(self, obs):
-        """ img is JPEG format, send it on the FIFO"""
-
-        contig = cv2.cvtColor(np.ascontiguousarray(obs), cv2.COLOR_BGR2RGB)
-        # compatible with ROS CompressedImage
-        img_data = np.array(cv2.imencode('.jpg', contig)[1]).tostring()
-        obs = {u'camera': {u'jpg_data': img_data}}
-        self.ci.write_topic_and_expect_zero(u'observations', obs)
-
-    def _get_commands(self):
-        commands = self.ci.write_topic_and_expect(u'get_commands', expect=u'commands')
-        commands = commands.data[u'wheels']
-        return commands
-
     def exit_gracefully(self, signum, frame):
         logger.info('SimulatorBridge exiting gracefully.')
         sys.exit(0)
 
     def run(self):
+        stepnum = 0
         env = launch_env()
         obs = env.reset()
-        self._send_img(obs)
-        print("Environment launched")
+        #print("Environment launched")
 
         logger.info('DuckiebotBridge has created Simulator environment')
 
@@ -90,38 +55,32 @@ class SimulatorBridge(object):
 
             time.sleep(1 / self.rate)
 
-            action = self._get_commands()
+            obs, reward, done, _ = env.step(self.action)
 
-            obs, reward, done, _ = self.env.step(action)
-
+            stepnum+=1
             if done:
                 obs = env.reset()
 
             np_arr = np.fromstring(obs, np.uint8)
             data = np_arr.tostring()
+
+            if stepnum % 20 == 0:
+                logger.info("{} steps done".format(stepnum))
+            if stepnum == 100000:
+                stepnum = 0
             
-            self._send_img(obs)
-
-            vl = commands['motor_left']
-            vr = commands['motor_right']
-            self.action = np.array([vl,vr])
-            self.updated = True
-
-            # TODO
-            # Open pipes
-            # Test
 
 
 def main():
     node = SimulatorBridge()
-    print("starting DuckiebotBridge node")
+    #print("starting DuckiebotBridge node")
     node.run()
     # at rate 15, should set action, step, publisg img and reset if done
 
 def launch_env(simclass=None):
     #print(sys.path)
     #TODO local sim and remove path change in beginning
-    from gym_duckietown.simulator import Simulator
+    from simulation.src.gym_duckietown.simulator import Simulator
 
     simclass = Simulator if simclass is None else simclass
 

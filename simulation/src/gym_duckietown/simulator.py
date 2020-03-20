@@ -257,6 +257,30 @@ class Simulator(gym.Env):
         self.window = None
 
         import pyglet
+        
+        # Display graphics info
+        from ctypes import c_char_p, cast
+        from typing import Dict
+        from pyglet import gl
+
+
+        options = {
+            'vendor': gl.GL_VENDOR,
+            'renderer': gl.GL_RENDERER, 'version': gl.GL_VERSION, 'shading-language-version':
+            gl.GL_SHADING_LANGUAGE_VERSION,
+            # 'extensions': gl.GL_EXTENSIONS
+        }
+
+        results = {}
+        for o, code in options.items():
+            a = gl.glGetString(code)
+            res = self.asstr(cast(a, c_char_p).value)
+            results[o] = res
+        logger.info(results)
+
+
+
+
         # Invisible window to render into (shadow OpenGL context)
         self.shadow_window = pyglet.window.Window(width=1,
                                                   height=1,
@@ -329,6 +353,12 @@ class Simulator(gym.Env):
         self.last_action = np.array([0, 0])
         self.wheelVels = np.array([0, 0])
 
+    def asstr(self,s):
+        if s is None:
+            return ''
+        if isinstance(s, str):
+            return s
+        return s.decode("utf-8")
     def _init_vlists(self):
         import pyglet
         # Create the vertex list for our road quad

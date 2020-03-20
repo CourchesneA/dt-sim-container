@@ -3,7 +3,7 @@ FROM duckietown/aido3-base-python3:daffy
 # TODO rm ROS
 
 RUN apt-get update \
-    && apt-get install -y python3-pip build-essential xvfb python-frozendict ffmpeg python-ruamel.yaml \
+    && apt-get install -y python3-pip build-essential xvfb python-frozendict ffmpeg python-ruamel.yaml freeglut3-dev vim \
     && apt-get -y autoremove \
     && apt-get -y clean  \
     && rm -rf /var/lib/apt/lists/*
@@ -16,7 +16,10 @@ RUN python3 -m pip install pip -U \
 
 RUN mkdir duckietown
 
-COPY requirements.txt duckietown
+WORKDIR /duckietown
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 #COPY setup/initial.sh duckietown
 #RUN cd duckietown && ./initial.sh 
 
@@ -24,8 +27,8 @@ COPY requirements.txt duckietown
 #RUN  pip install -r duckietown/requirements.txt
 
 # Custom
-COPY simulation/ duckietown/simulation
-RUN pip install -r duckietown/simulation/requirements.txt
+COPY simulation/ simulation
+RUN pip install -r simulation/requirements.txt
 
 #TODO merge those requirements ^^
 #RUN pip install -r duckietown/requirements.txt
@@ -42,14 +45,16 @@ ENV SHELL /bin/bash
 
 
 
-WORKDIR /duckietown
 
 
 #RUN mkdir sim_ws
 #COPY sim_ws sim_ws
 
 COPY sim_bridge.py sim_bridge.py
-
+COPY launch.sh launch.sh
+RUN chmod +x launch.sh
+COPY check_hw.sh check_hw.sh
+RUN chmod +x check_hw.sh
 
 #RUN . /opt/ros/melodic/setup.sh && \
 #catkin build --workspace sim_ws
@@ -61,4 +66,6 @@ COPY sim_bridge.py sim_bridge.py
 #RUN chmod u+x launch_sim.sh
 
 #CMD ./launch_sim.sh
-CMD python3 ./sim_bridge.py
+#CMD python3 ./sim_bridge.py
+#CMD ./launch.sh
+ENTRYPOINT ["./launch.sh"]

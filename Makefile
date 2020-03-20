@@ -5,3 +5,6 @@ build:
 
 run:
 	docker run courchesnea/dt-sim:test 
+
+push:
+	docker push courchesnea/dt-sim:test
