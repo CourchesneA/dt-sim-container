@@ -53,8 +53,8 @@ ENV SHELL /bin/bash
 COPY sim_bridge.py sim_bridge.py
 COPY launch.sh launch.sh
 RUN chmod +x launch.sh
-COPY check_hw.sh check_hw.sh
-RUN chmod +x check_hw.sh
+COPY check_hw.py check_hw.py
+RUN chmod +x check_hw.py
 
 #RUN . /opt/ros/melodic/setup.sh && \
 #catkin build --workspace sim_ws
